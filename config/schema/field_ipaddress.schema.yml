@@ -1,3 +1,17 @@
+field.field_settings.ipaddress:
+  type: mapping
+  label: 'ipaddress settings'
+  mapping:
+    allow_range:
+      type: boolean
+      label: 'Allow IP range'
+    allow_family:
+      type: integer
+      label: 'Allow IP family'
+    ip_range:
+      type: string
+      label: 'Minimum IP'
+
 field.widget.settings.ipaddress_default:
   type: mapping
   label: 'IP address default display format settings'

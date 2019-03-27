@@ -122,4 +122,75 @@ class IpAddress extends FieldItemBase implements FieldItemInterface {
     $value = $this->get('ip_from')->getValue();
     return $value === NULL || $value === '';
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function defaultFieldSettings() {
+    return array(
+      'allow_range'  => TRUE,
+      'allow_family' => 4,
+      'ip_range'     => '',
+    ) + parent::defaultFieldSettings();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function fieldSettingsForm(array $form, FormStateInterface $form_state) {
+    $element = array();
+
+    $settings = $this->getSettings();
+    \Drupal::messenger()->addStatus(print_r($settings,1));
+
+    $element['ip_specific'] = array(
+      '#type' => 'details',
+      '#title' => $this->t('IP Specific settings'),
+      '#description' => $this->t('These settings are IP validation specific to this field instance.'),
+      '#open' => TRUE
+    );
+
+    $element['ip_specific']['allow_family'] = array(
+      '#type'    => 'radios',
+      '#title'   => $this->t('IP version(s) allowed'),
+      '#options' => array(
+        4 => $this->t('IPv4'), 
+        6 => $this->t('IPv6'),
+        1 => $this->t('Both IPv4 and IPv6'),
+      ),
+      '#description' => $this->t('Select the IP address family (or families) that are allowed.'),
+      '#default_value' => $settings['allow_family']
+    );
+
+    $element['ip_specific']['allow_range'] = array(
+      '#type'  => 'checkbox',
+      '#title' => $this->t('Allow IP Range'),
+      '#default_value' => $settings['allow_range']
+    );    
+
+    $element['ip_specific']['ip_range'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Allowed IP range.'),
+      '#description' => $this->t('Range must match IP version otherwise validation will always fail.<br/>Leave blank to allow any valid IP.'),
+      '#states' => array(
+        'visible' => array(
+          ':input[name="settings[ip_specific][allow_range]"]' => array('checked' => TRUE)
+        )
+      ),
+      '#default_value' => $settings['ip_range'],
+      //'#element_validate' => array(array($this, 'validateRange'))
+    );
+
+
+
+    return $element;
+
+  }
+
+  public function validateRange($element, FormStateInterface $form_state) {
+    $submitted_value = $form_state->getValue($element['#parents']);
+   //$form_state->setError($element, '<pre>'.print_r($submitted_value,1).'</pre>');
+  }
+
+
 }
