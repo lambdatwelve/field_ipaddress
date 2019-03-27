@@ -1,8 +1,7 @@
 name: 'Field IP address'
 type: module
-description: 'Provides an IP address field that will habndle single IP addresses and IP ranges. Can be IPv4 or IPv6.'
+description: 'Provides a field to hold single or range of IPs (IPv4 or IPv6).'
 package : Fields
-version: VERSION
 core: 8.x
 dependencies:
   - field
