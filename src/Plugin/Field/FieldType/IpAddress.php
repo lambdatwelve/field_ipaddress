@@ -141,16 +141,8 @@ class IpAddress extends FieldItemBase implements FieldItemInterface {
     $element = array();
 
     $settings = $this->getSettings();
-    \Drupal::messenger()->addStatus(print_r($settings,1));
-
-    $element['ip_specific'] = array(
-      '#type' => 'details',
-      '#title' => $this->t('IP Specific settings'),
-      '#description' => $this->t('These settings are IP validation specific to this field instance.'),
-      '#open' => TRUE
-    );
-
-    $element['ip_specific']['allow_family'] = array(
+    
+    $element['allow_family'] = array(
       '#type'    => 'radios',
       '#title'   => $this->t('IP version(s) allowed'),
       '#options' => array(
@@ -162,19 +154,26 @@ class IpAddress extends FieldItemBase implements FieldItemInterface {
       '#default_value' => $settings['allow_family']
     );
 
-    $element['ip_specific']['allow_range'] = array(
+    $element['allow_range'] = array(
       '#type'  => 'checkbox',
       '#title' => $this->t('Allow IP Range'),
       '#default_value' => $settings['allow_range']
     );    
 
-    $element['ip_specific']['ip_range'] = array(
+    $element['ip_range'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Allowed IP range.'),
       '#description' => $this->t('Range must match IP version otherwise validation will always fail.<br/>Leave blank to allow any valid IP.'),
       '#states' => array(
         'visible' => array(
-          ':input[name="settings[ip_specific][allow_range]"]' => array('checked' => TRUE)
+          array(
+            ':input[name="settings[allow_range]"]' => array('checked' => FALSE),
+            ':input[name="settings[allow_family]"]' => array('value' => 4)
+          ),
+          array(
+            ':input[name="settings[allow_range]"]' => array('checked' => FALSE),
+            ':input[name="settings[allow_family]"]' => array('value' => 6)            
+          )
         )
       ),
       '#default_value' => $settings['ip_range'],

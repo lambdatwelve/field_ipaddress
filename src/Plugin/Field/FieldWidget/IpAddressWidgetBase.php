@@ -14,27 +14,25 @@ class IpAddressWidgetBase extends WidgetBase {
    * {@inheritdoc}
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
+
+    $element['settings'] = $this->fieldDefinition->getSettings();
+    kint($element['settings']);
+
     $element = array(
       'value' => $element + array(
         '#type' => 'textfield'
       )
     );
+
     $element['#element_validate'] = array(array(get_class($this), 'validateIpAddressElement'));
 
-    // For easy access to validator, we include these settings here
-    $element['ipv4_span'] = array(
-      '#value' => $this->getSetting('ipv4_span')
-    );
-    $element['ipv6_span'] = array(
-      '#value' => $this->getSetting('ipv6_span')
-    );
-
+    /*
     if (($value = $items[$delta]->getValue()) && !empty($value['ip_from'])) {
       $element['value']['#default_value'] = inet_ntop($value['ip_from']);
       if ($value['ip_to'] != $value['ip_from']) {
         $element['value']['#default_value'] .= ' - ' . inet_ntop($value['ip_to']);
       }
-    }
+    }*/
 
     return $element;
   }
@@ -47,61 +45,49 @@ class IpAddressWidgetBase extends WidgetBase {
    * @param $form
    */
   public static function validateIpAddressElement(&$element, FormStateInterface $form_state, $form) {
-    if (trim($element['value']['#value']) !== '') {
-      // Get rid of spaces
-      $value = str_replace(' ', '', $element['value']['#value']);
-      // If a range, extract the parts
-      $ip_parts = explode('-', $value);
-      if (count($ip_parts) > 2) {
-        $form_state->setError($element, t('Please provide a valid IP range as a span X.X.X.X - X.X.X.X.'));
-        return;
-      }
-      if (!filter_var($ip_parts[0], FILTER_VALIDATE_IP)) {
-        $form_state->setError($element, t('Please provide a valid IP address or IP range.'));
-        return;
-      }
-      $packed_start = inet_pton($ip_parts[0]);
-      if (!isset($ip_parts[1])) {
-        $packed_end = $packed_start;
-      }
-      else {
-        if (!filter_var($ip_parts[1], FILTER_VALIDATE_IP)) {
-          $form_state->setError($element, t('Please provide a valid IP address or IP range.'));
-          return;
-        }
-        $packed_end = inet_pton($ip_parts[1]);
-      }
-      // Validate type of IP is the same
-      if (strlen($packed_start) != strlen($packed_end)) {
-        $form_state->setError($element, t('Please provide the same type of IP addresses.'));
-        return;
-      }
-      // Validate last is not lower than first
-      if ($packed_start > $packed_end) {
-        $form_state->setError($element, t('Please make sure start of IP interval is lower than end of interval.'));
-        return;
-      }
-      // Validate span
-      $is_ipv6 = (strlen($packed_start) == 16) ? 1 : 0;
-      $max_span = $is_ipv6 ? $element['ipv6_span']['#value'] : $element['ipv4_span']['#value'];
-      $start_number = unpack('C*', $packed_start);
-      $end_number = unpack('C*', $packed_end);
-      $difference = 0;
-      $i = 0;
-      while (count($start_number)) {
-        $start_byte = array_pop($start_number);
-        $end_byte = array_pop($end_number);
-        if ($start_byte != $end_byte) {
-          $factor = pow(256, $i);
-          $difference += ($end_byte - $start_byte) * $factor;
-        }
-        $i++;
-      }
-      if ($difference > $max_span) {
-        $form_state->setError($element, t('Please make sure the IP interval does not span more than @span numbers.', array('@span' => $max_span)));
-        return;
-      }
+    if (trim($element['value']['#value']) === '') { 
+      return;
     }
+
+    // Get field settings.
+    $settings = $element['settings'];
+
+    // Get helper service.
+    $iptool   = \Drupal::service('field_ipaddress.service.iptools');
+
+    // Get rid of spaces
+    $value = $iptool->sanitizeIP($element['value']['#value']);
+
+    // Check if this is an IP range
+    if($iptool->isValidRange($value)) {
+      // Split to bounds
+      $form_state->setError($element, 'Cant handle ranges yet.');
+      return;
+    }
+
+    // Check if this is a simple IP address 
+    if($iptool->isValid($value)) {
+      // Check address family, make sure it matches settings.
+      if($settings['allow_family']===4 && !$iptool->isIPv4($value)) {
+        $form_state->setError($element, t('Only single IPv4 addresses are allowed.'));
+      }
+
+      if($settings['allow_family']===6 && !$iptool->ipIPv6($value)) {
+        $form_state->setError($element, t('Only single IPv6 addresses are allowed.')); 
+      }
+
+      // Check if we need to validate IP range
+      if($settings['ip_range']!='') {
+        // Check if IP is within range
+        if(!$iptool->isInRange($value, $settings['ip_range'])) {
+          $form_state->setError($element, t('IP must be within the range @range', array('@range'=>$settings['ip_range'])));
+        }
+      }
+
+      return;
+    }
+
+    $form_state->setError($element, t('Invalid IP format.'));
   }
 
 

@@ -16,6 +16,7 @@ namespace Drupal\field_ipaddress\Service;
  * @see https://doc.wikimedia.org/mediawiki-core/master/php/IP_8php_source.html
  */
 class IpTools {
+  /* Constant Regular Expressions for various IP notations */
   const RE_IP_BYTE = '(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|0?[0-9]?[0-9])';
   const RE_IP_ADD  = self::RE_IP_BYTE . '\.' . self::RE_IP_BYTE . '\.' . self::RE_IP_BYTE . '\.' . self::RE_IP_BYTE;
 
@@ -66,32 +67,33 @@ class IpTools {
       || preg_match( '/^' . self::RE_IPV6_ADD . '$/', $ip ) );
   }
 
-  public static function isValidBlock( $ipRange ) {
-    return self::isValidRange( $ipRange );
-  }
-
   public static function isValidRange( $ipRange ) {
     return ( preg_match( '/^' . self::RE_IPV6_RANGE . '$/', $ipRange )
       || preg_match( '/^' . self::RE_IP_RANGE . '$/', $ipRange ) );
   }
 
   public static function sanitizeIP( $ip ) {
+
     $ip = trim( $ip );
     if ( $ip === '' ) {
       return null;
     }
+
     /* If not an IP, just return trimmed value, since sanitizeIP() is called
     * in a number of contexts where usernames are supplied as input.
     */
     if(!self::isIPAddress($ip)) {
       return $ip;
     }
+
+
     if(self::isIPv4($ip)) {
       // Remove leading 0's from octet representation of IPv4 address
       $ip = preg_replace('!(?:^|(?<=\.))0+(?=[1-9]|0[./]|0$)!', '', $ip);
       return $ip;
     }
-    
+
+
     // Remove any whitespaces, convert to upper case
     $ip = strtoupper($ip);
     // Expand zero abbreviations
