@@ -1,0 +1,3 @@
+services:
+  field_ipaddress.service.iptools:
+    class: '\Drupal\field_ipaddress\Service\IpTools'
