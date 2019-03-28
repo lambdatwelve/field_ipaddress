@@ -44,11 +44,11 @@ class IpAddressDefaultFormatter extends FormatterBase implements ContainerFactor
     foreach ($items as $delta => $item) {
       $value = $item->getValue();
       if (!empty($value['ip_from'])) {
-        $element['value']['#default_value'] = inet_ntop($value['ip_from']);
+        $text = inet_ntop($value['ip_from']);
       }
 
       if ($value['ip_from'] != $value['ip_to']) {
-        $element['value']['#default_value'] .= '-' . inet_ntop($value['ip_to']);
+        $text .= '-' . inet_ntop($value['ip_to']);
       }
 
       $elements[$delta] = [

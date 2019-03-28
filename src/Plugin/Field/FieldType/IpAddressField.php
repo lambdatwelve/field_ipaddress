@@ -164,7 +164,7 @@ class IpAddressField extends FieldItemBase implements FieldItemInterface {
     $element['ip4_range'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Allowed IPv4 range.'),
-      '#description' => $this->t('The range of IPv4 addresses to allow.'),
+      '#description' => $this->t('The range of IPv4 addresses to allow. Leave blank to allow any valid IPv4 address.'),
       '#states' => [
         'visible' => [
           [
@@ -178,12 +178,13 @@ class IpAddressField extends FieldItemBase implements FieldItemInterface {
         ],
       ],
       '#default_value' => $settings['ip4_range'],
+      '#element_validate' => [[$this, 'validateIpAddressElement']],
     ];
 
     $element['ip6_range'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Allowed IPv6 range.'),
-      '#description' => $this->t('The range of IPv6 addresses to allow.'),
+      '#description' => $this->t('The range of IPv6 addresses to allow. Leave blank to allow any valid IPv6 address.'),
       '#states' => [
         'visible' => [
           [
@@ -197,17 +198,49 @@ class IpAddressField extends FieldItemBase implements FieldItemInterface {
         ],
       ],
       '#default_value' => $settings['ip6_range'],
+      '#element_validate' => [[$this, 'validateIpAddressElement']],
     ];
 
     return $element;
-
   }
 
   /**
-   * TODO: Implement this.
+   * Custom validator.
+   *
+   * @param array $element
+   *   The element being validated.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   Current form state.
+   * @param array $form
+   *   Current form.
    */
-  public function validateRange($element, FormStateInterface $form_state) {
-    $submitted_value = $form_state->getValue($element['#parents']);
+  public function validateIpAddressElement(array &$element, FormStateInterface $form_state, array $form) {
+    $value = $form_state->getValue($element['#parents']);
+    if (trim($value) == '') {
+      return;
+    }
+
+    // Instantiate our IP, will throw \Exception if invalid.
+    try {
+      $ip_address = new IpAddress($value);
+    }
+    catch (\Exception $e) {
+      $form_state->setError($element, t('Invalid IP or range.'));
+      return;
+    }
+
+    // These fields can only accept IP ranges.
+    if ($ip_address->start() == $ip_address->end()) {
+      $form_state->setError($element, t('Value must be an IP range.'));
+    }
+
+    if ($element['#name'] == 'settings[ip4_range]' && $ip_address->family() != IpAddress::IP_FAMILY_4) {
+      $form_state->setError($element, t('Value must be an IPv4 range.'));
+    }
+
+    if ($element['#name'] == 'settings[ip6_range]' && $ip_address->family() != IpAddress::IP_FAMILY_6) {
+      $form_state->setError($element, t('Value must be an IPv6 range.'));
+    }
   }
 
 }
