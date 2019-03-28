@@ -2,9 +2,7 @@
 
 namespace Drupal\field_ipaddress\Plugin\Field\FieldWidget;
 
-use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Field\FieldItemListInterface;
-use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -21,13 +19,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * )
  */
 class IpAddressDefaultWidget extends IpAddressWidgetBase implements ContainerFactoryPluginInterface {
-
-  /**
-   * {@inheritdoc}
-   */
-  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings) {
-    parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
-  }
 
   /**
    * {@inheritdoc}

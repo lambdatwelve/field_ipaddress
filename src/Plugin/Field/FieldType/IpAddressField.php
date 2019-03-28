@@ -28,7 +28,7 @@ class IpAddressField extends FieldItemBase implements FieldItemInterface {
    * {@inheritdoc}
    */
   public static function defaultStorageSettings() {
-    return array() + parent::defaultStorageSettings();
+    return [] + parent::defaultStorageSettings();
   }
 
   /**
@@ -54,64 +54,62 @@ class IpAddressField extends FieldItemBase implements FieldItemInterface {
    * {@inheritdoc}
    */
   public static function schema(FieldStorageDefinitionInterface $field_definition) {
-    return array(
-      'columns' => array(
-        'ipv6' => array(
+    return [
+      'columns' => [
+        'ipv6' => [
           'description' => 'If this is a IPv6 type address',
           'type' => 'int',
           'size' => 'tiny',
           'default' => 0,
           'not null' => TRUE,
-        ),
+        ],
         // For IPv4 we store IP numbers as 4 byte binary (32 bit)
         // for IPv6 we store 16 byte binary (128 bit)
         // this follows the in_addr as used by the PHP function
         // inet_pton().
-        'ip_from' => array(
+        'ip_from' => [
           'description' => 'The minimum IP address stored as a binary number.',
           'type' => 'blob',
           'size' => 'tiny',
           'mysql_type' => 'varbinary(16)',
           'not null' => TRUE,
-          'binary' => TRUE
-        ),
-        'ip_to' => array(
+          'binary' => TRUE,
+        ],
+        'ip_to' => [
           'description' => 'The maximum IP address stored as a binary number.',
           'type' => 'blob',
           'size' => 'tiny',
           'mysql_type' => 'varbinary(16)',
           'not null' => TRUE,
-          'binary' => TRUE
-        ),
-      ),
-      'indexes' => array(
-        'ipv6' => array('ipv6'),
-        'ip_from' => array('ip_from'),
-        'ip_to' => array('ip_to')
-      ),
-    );
+          'binary' => TRUE,
+        ],
+      ],
+      'indexes' => [
+        'ipv6' => ['ipv6'],
+        'ip_from' => ['ip_from'],
+        'ip_to' => ['ip_to'],
+      ],
+    ];
   }
-
-
 
   /**
    * {@inheritdoc}
    */
   public static function generateSampleValue(FieldDefinitionInterface $field_definition) {
-    // First random i IPv4 or IPv6
-    $values['ipv6'] = (rand(0,1) == 1);
-    // IPv6 contains 16 bytes, IPv4 contains 4 bytes
+    // First random i IPv4 or IPv6.
+    $values['ipv6'] = (rand(0, 1) == 1);
+    // IPv6 contains 16 bytes, IPv4 contains 4 bytes.
     $bytes = $values['ipv6'] == 1 ? 16 : 4;
-    // Use a built in PHP function to generate random bytes
+    // Use a built in PHP function to generate random bytes.
     $values['ip_from'] = openssl_random_pseudo_bytes($bytes);
-    // Extract first part excluding last byte
+    // Extract first part excluding last byte.
     $values['ip_to'] = substr($values['ip_from'], 0, $bytes - 1);
 
     $last_byte = substr($values['ip_from'], -1);
 
     $from_last_number = end(unpack('C', $last_byte));
     $to_last_number = rand($from_last_number, 255);
-    // Add last number
+    // Add last number.
     $values['ip_to'] .= pack('C', $to_last_number);
 
     return $values;
@@ -129,86 +127,87 @@ class IpAddressField extends FieldItemBase implements FieldItemInterface {
    * {@inheritdoc}
    */
   public static function defaultFieldSettings() {
-    return array(
+    return [
       'allow_range'  => TRUE,
       'allow_family' => 4,
       'ip4_range'    => '',
       'ip6_range'    => '',
-    ) + parent::defaultFieldSettings();
+    ] + parent::defaultFieldSettings();
   }
 
   /**
    * {@inheritdoc}
    */
   public function fieldSettingsForm(array $form, FormStateInterface $form_state) {
-    $element = array();
+    $element = [];
 
     $settings = $this->getSettings();
-    
-    $element['allow_family'] = array(
+
+    $element['allow_family'] = [
       '#type'    => 'radios',
       '#title'   => $this->t('IP version(s) allowed'),
-      '#options' => array(
-        IpAddress::IP_FAMILY_4   => $this->t('IPv4'), 
+      '#options' => [
+        IpAddress::IP_FAMILY_4   => $this->t('IPv4'),
         IpAddress::IP_FAMILY_6   => $this->t('IPv6'),
         IpAddress::IP_FAMILY_ALL => $this->t('Both IPv4 and IPv6'),
-      ),
+      ],
       '#description' => $this->t('Select the IP address family (or families) that are allowed.'),
-      '#default_value' => $settings['allow_family']
-    );
+      '#default_value' => $settings['allow_family'],
+    ];
 
-    $element['allow_range'] = array(
+    $element['allow_range'] = [
       '#type'  => 'checkbox',
       '#title' => $this->t('Allow IP Range'),
-      '#default_value' => $settings['allow_range']
-    );    
+      '#default_value' => $settings['allow_range'],
+    ];
 
-    $element['ip4_range'] = array(
+    $element['ip4_range'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Allowed IPv4 range.'),
       '#description' => $this->t('The range of IPv4 addresses to allow.'),
-      '#states' => array(
-        'visible' => array(
-          array(
-            ':input[name="settings[allow_range]"]' => array('checked' => TRUE),
-            ':input[name="settings[allow_family]"]' => array('value' => IpAddress::IP_FAMILY_4),
-          ),
-          array(
-            ':input[name="settings[allow_range]"]' => array('checked' => TRUE),            
-            ':input[name="settings[allow_family]"]' => array('value' => IpAddress::IP_FAMILY_ALL),            
-          )
-        )
-      ),
+      '#states' => [
+        'visible' => [
+          [
+            ':input[name="settings[allow_range]"]' => ['checked' => TRUE],
+            ':input[name="settings[allow_family]"]' => ['value' => IpAddress::IP_FAMILY_4],
+          ],
+          [
+            ':input[name="settings[allow_range]"]' => ['checked' => TRUE],
+            ':input[name="settings[allow_family]"]' => ['value' => IpAddress::IP_FAMILY_ALL],
+          ],
+        ],
+      ],
       '#default_value' => $settings['ip4_range'],
-    );
+    ];
 
-    $element['ip6_range'] = array(
+    $element['ip6_range'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Allowed IPv6 range.'),
       '#description' => $this->t('The range of IPv6 addresses to allow.'),
-      '#states' => array(
-        'visible' => array(
-          array(
-            ':input[name="settings[allow_range]"]' => array('checked' => TRUE),
-            ':input[name="settings[allow_family]"]' => array('value' => IpAddress::IP_FAMILY_6)            
-          ),
-          array(
-            ':input[name="settings[allow_range]"]' => array('checked' => TRUE),            
-            ':input[name="settings[allow_family]"]' => array('value' => IpAddress::IP_FAMILY_ALL),            
-          )
-        )
-      ),
+      '#states' => [
+        'visible' => [
+          [
+            ':input[name="settings[allow_range]"]' => ['checked' => TRUE],
+            ':input[name="settings[allow_family]"]' => ['value' => IpAddress::IP_FAMILY_6],
+          ],
+          [
+            ':input[name="settings[allow_range]"]' => ['checked' => TRUE],
+            ':input[name="settings[allow_family]"]' => ['value' => IpAddress::IP_FAMILY_ALL],
+          ],
+        ],
+      ],
       '#default_value' => $settings['ip6_range'],
-    );
+    ];
 
     return $element;
 
   }
 
+  /**
+   * TODO: Implement this.
+   */
   public function validateRange($element, FormStateInterface $form_state) {
     $submitted_value = $form_state->getValue($element['#parents']);
-   //$form_state->setError($element, '<pre>'.print_r($submitted_value,1).'</pre>');
   }
-
 
 }
