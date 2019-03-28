@@ -15,8 +15,8 @@ such as:
 REQUIREMENTS
 ------------
 
-* To be able to use the IPv6 features, your PHP needs to be complied with support for
-it (on by default). 
+* To be able to use the IPv6 features, your PHP needs to be complied with
+support for it (on by default). 
 * Drupal Core (no external dependencies)
 
 INSTALLATION
@@ -48,6 +48,6 @@ Current maintainers:
 
 This project has been sponsored by:
  * LAMBDA TWELVE
- Specialized in consulting and planning of web solutions, LAMBDA TWELVE offers development,
- hosting, and anything in between for your project. Visit https://www.lambda-twelve.com for
- more information.
+ Specialized in consulting and planning of web solutions, LAMBDA TWELVE offers
+ development, hosting, and anything in between for your project. Visit 
+ https://www.lambda-twelve.com for more information.
