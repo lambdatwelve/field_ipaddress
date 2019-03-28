@@ -6,6 +6,8 @@ use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
 
+use Drupal\field_ipaddress\IpAddress;
+
 /**
  * Base class for the 'ipaddress_*' widgets.
  */
@@ -15,16 +17,13 @@ class IpAddressWidgetBase extends WidgetBase {
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
 
-    $element['settings'] = $this->fieldDefinition->getSettings();
-    kint($element['settings']);
-
     $element = array(
       'value' => $element + array(
         '#type' => 'textfield'
       )
     );
 
-    $element['#element_validate'] = array(array(get_class($this), 'validateIpAddressElement'));
+    $element['#element_validate'] = array(array($this, 'validateIpAddressElement'));
 
     /*
     if (($value = $items[$delta]->getValue()) && !empty($value['ip_from'])) {
@@ -44,50 +43,46 @@ class IpAddressWidgetBase extends WidgetBase {
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    * @param $form
    */
-  public static function validateIpAddressElement(&$element, FormStateInterface $form_state, $form) {
-    if (trim($element['value']['#value']) === '') { 
+  public  function validateIpAddressElement(&$element, FormStateInterface $form_state, $form) {
+    $settings = $this->fieldDefinition->getSettings();
+    kint($settings);
+    $value = trim($element['value']['#value']);
+    if ($value === '') { 
       return;
     }
 
-    // Get field settings.
-    $settings = $element['settings'];
-
-    // Get helper service.
-    $iptool   = \Drupal::service('field_ipaddress.service.iptools');
-
-    // Get rid of spaces
-    $value = $iptool->sanitizeIP($element['value']['#value']);
-
-    // Check if this is an IP range
-    if($iptool->isValidRange($value)) {
-      // Split to bounds
-      $form_state->setError($element, 'Cant handle ranges yet.');
-      return;
+    // Instantiate our IP, will throw \Exception if invalid.
+    try {
+      $ip_address = new IpAddress($value);
+    } catch(\Exception $e) {
+      // Make error messages a bit more relevant.
+      if($settings['allow_range']) {
+        $form_state->setError($element, t('Invalid IP or range.'));  
+      } else {
+        $form_state->setError($element, t('Invalid IP.'));  
+      }
     }
 
-    // Check if this is a simple IP address 
-    if($iptool->isValid($value)) {
-      // Check address family, make sure it matches settings.
-      if($settings['allow_family']===4 && !$iptool->isIPv4($value)) {
-        $form_state->setError($element, t('Only single IPv4 addresses are allowed.'));
-      }
-
-      if($settings['allow_family']===6 && !$iptool->ipIPv6($value)) {
-        $form_state->setError($element, t('Only single IPv6 addresses are allowed.')); 
-      }
-
-      // Check if we need to validate IP range
-      if($settings['ip_range']!='') {
-        // Check if IP is within range
-        if(!$iptool->isInRange($value, $settings['ip_range'])) {
-          $form_state->setError($element, t('IP must be within the range @range', array('@range'=>$settings['ip_range'])));
-        }
-      }
-
-      return;
+    if(!$settings['allow_range'] && $ip_address->start() != $ip_address->end())) {
+      $form_state->setError($element, t('Ranges not allowed, single IP only.'));  
     }
 
-    $form_state->setError($element, t('Invalid IP format.'));
+    if($settings['allow_family'] != $ip_address::IP_FAMILY_BOTH && $settings['allow_family']!=$ip_address->family()) {
+      if($settings['allow_family'] == $ip_address::IP_FAMILY_IPV4) {
+        $form_state->setError($element, t('Only IPv4 addresses allowed.'));   
+      } else {
+        $form_state->setError($element, t('Only IPv6 addresses allowed.'));   
+      }
+    }
+
+    kint($ip_address);
+    
+    
+    
+
+    
+
+    $form_state->setError($element, t('You shall not pass.'));
   }
 
 

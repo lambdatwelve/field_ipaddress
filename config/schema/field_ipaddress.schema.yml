@@ -8,9 +8,12 @@ field.field_settings.ipaddress:
     allow_family:
       type: integer
       label: 'Allow IP family'
-    ip_range:
+    ip4_range:
       type: string
-      label: 'Minimum IP'
+      label: 'IPv4 range'
+    ip6_range:
+      type: string
+      label: 'IPv6 range'
 
 field.widget.settings.ipaddress_default:
   type: mapping
