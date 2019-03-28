@@ -24,7 +24,7 @@ class IpAddress {
   protected $type   = null;
   protected $start  = null;
   protected $end    = null;
-
+  
   /* Define simple getters for our properties */  
   public function family() {
     return $this->family;
@@ -42,14 +42,40 @@ class IpAddress {
     return $this->end;
   }
 
-
   // On construction, parse the given value
   public function __construct($value) {
     $result = $this->parse($value);
 
     if($result === FALSE) {
+      $this->family = null;
+      $this->type   = null;
+      $this->start  = null;
+      $this->end    = null;
       throw new \Exception('Invalid value.');
-    }    
+    }
+  }
+
+  public function inRange($min, $max) {
+    if(
+      !$this->isIpAddress($min) 
+      || !$this->isIpAddress($max)
+    ) {
+      throw new \Exception('Invalid value.'); 
+    }
+
+    // IPs in different families are by default not within range.
+    if(
+      || $this->getFamily($min) != $this->family 
+      || $this->getFamily($max) != $this->family
+    ) {
+     return FALSE;
+    }
+
+    if($this->family == self::IP_FAMILY_4) {
+      return $this->inRange4($min,$max);
+    } else {
+      return $this->inRange6($min,$max);
+    }
   }
 
   // Simple checks for an IP address
@@ -206,6 +232,47 @@ class IpAddress {
     return inet_pton($ip);
   }
 
+  /*
+   * Checks if the current IPv4 is within a given min and max IP
+   *
+   * @see https://stackoverflow.com/questions/18336908/php-check-if-ip-address-is-in-a-range-of-ip-addresses/18336909#answer-18336909
+   */
+  private function inRange4($min,$max) {
+    $min_long = ip2long($min);
+    $max_long = ip2long($max);
+
+    if($this->type == self:IP_RANGE_NONE) {
+      $start_long = $end_long = ip2long($this->start);  
+    } else {
+      $start_long = ip2long($this->start); 
+      $end_long   = ip2long($this->end);
+    }
+    
+    return (
+      ($start_long >= $min_long && $start_long <= $max_long)
+      && ( $end_long >= $min_long && $end_long <= $max_long)
+    );
+  }
+
+  /*
+   * Checks if the current IPv6 is within a given min and max IP
+   */
+  private function inRange6($min,$max) {
+    $min_bin = inet_pton($min);
+    $max_bin = inet_pton($max);
+
+    if($this->type == self::IP_RANGE_NONE) {
+      $start_bin = $end_bin = inet_pton($this->start);
+    } else {
+      $start_bin = inet_pton($this->start);
+      $end_bin   = inet_pton($this->end);
+    }
+
+    return (
+      ($start_bin >= $min_bin && $start_bin <= $max_bin)
+      && ( $end_bin >= $min_bin && $end_bin <= $max_bin)
+    );
+  }
 
 
 }
