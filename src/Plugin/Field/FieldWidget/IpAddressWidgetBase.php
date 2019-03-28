@@ -68,6 +68,7 @@ class IpAddressWidgetBase extends WidgetBase {
       else {
         $form_state->setError($element, t('Invalid IP.'));
       }
+      return;
     }
 
     if (!$settings['allow_range'] && $ip_address->start() != $ip_address->end()) {
@@ -87,7 +88,7 @@ class IpAddressWidgetBase extends WidgetBase {
       // No validation for $ip4_range here, it should have already been done
       // on field settings form.
       $range = new IpAddress($settings['ip4_range']);
-      kint($range);
+
       if (!$ip_address->inRange($range->start(), $range->end())) {
         $form_state->setError($element,
           t('IP must be within the range @min-@max', ['@min' => $range->start(), '@max' => $range->end()]));

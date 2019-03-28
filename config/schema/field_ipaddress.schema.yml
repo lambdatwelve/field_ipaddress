@@ -14,14 +14,3 @@ field.field_settings.ipaddress:
     ip6_range:
       type: string
       label: 'IPv6 range'
-
-field.widget.settings.ipaddress_default:
-  type: mapping
-  label: 'IP address default display format settings'
-  mapping:
-    ipv4_span:
-      type: integer
-      label: 'Maximum span for IPv4 addresses'
-    ipv6_span:
-      type: integer
-      label: 'Maximum span for IPv6 addresses'

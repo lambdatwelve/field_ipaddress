@@ -35,11 +35,11 @@ class IpAddressField extends FieldItemBase implements FieldItemInterface {
    * {@inheritdoc}
    */
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
-    $properties['ip_from'] = DataDefinition::create('any')
+    $properties['ip_start'] = DataDefinition::create('any')
       ->setLabel(t('IP value minimum'))
       ->setDescription(t('The IP minimum value, as a binary number.'));
 
-    $properties['ip_to'] = DataDefinition::create('any')
+    $properties['ip_end'] = DataDefinition::create('any')
       ->setLabel(t('IP value maximum'))
       ->setDescription(t('The IP maximum value, as a binary number.'));
 
@@ -56,7 +56,7 @@ class IpAddressField extends FieldItemBase implements FieldItemInterface {
         // for IPv6 we store 16 byte binary (128 bit)
         // this follows the in_addr as used by the PHP function
         // inet_pton().
-        'ip_from' => [
+        'ip_start' => [
           'description' => 'The minimum IP address stored as a binary number.',
           'type' => 'blob',
           'size' => 'tiny',
@@ -64,7 +64,7 @@ class IpAddressField extends FieldItemBase implements FieldItemInterface {
           'not null' => TRUE,
           'binary' => TRUE,
         ],
-        'ip_to' => [
+        'ip_end' => [
           'description' => 'The maximum IP address stored as a binary number.',
           'type' => 'blob',
           'size' => 'tiny',
@@ -74,8 +74,8 @@ class IpAddressField extends FieldItemBase implements FieldItemInterface {
         ],
       ],
       'indexes' => [
-        'ip_from' => ['ip_from'],
-        'ip_to' => ['ip_to'],
+        'ip_start' => ['ip_start'],
+        'ip_end' => ['ip_end'],
       ],
     ];
   }
@@ -89,16 +89,16 @@ class IpAddressField extends FieldItemBase implements FieldItemInterface {
     // IPv6 contains 16 bytes, IPv4 contains 4 bytes.
     $bytes = $family == 1 ? 16 : 4;
     // Use a built in PHP function to generate random bytes.
-    $values['ip_from'] = openssl_random_pseudo_bytes($bytes);
+    $values['ip_start'] = openssl_random_pseudo_bytes($bytes);
     // Extract first part excluding last byte.
-    $values['ip_to'] = substr($values['ip_from'], 0, $bytes - 1);
+    $values['ip_end'] = substr($values['ip_start'], 0, $bytes - 1);
 
-    $last_byte = substr($values['ip_from'], -1);
+    $last_byte = substr($values['ip_start'], -1);
 
     $from_last_number = end(unpack('C', $last_byte));
     $to_last_number = rand($from_last_number, 255);
     // Add last number.
-    $values['ip_to'] .= pack('C', $to_last_number);
+    $values['ip_end'] .= pack('C', $to_last_number);
 
     return $values;
   }
@@ -107,8 +107,8 @@ class IpAddressField extends FieldItemBase implements FieldItemInterface {
    * {@inheritdoc}
    */
   public function isEmpty() {
-    $value = $this->get('ip_from')->getValue();
-    return $value === NULL || $value === '';
+    $value = $this->get('ip_start')->getValue();
+    return $value === NULL || $value == '';
   }
 
   /**
