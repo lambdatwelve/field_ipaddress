@@ -24,7 +24,8 @@ class IpAddress {
   protected $type   = null;
   protected $start  = null;
   protected $end    = null;
-  
+  protected $raw    = null;
+
   /* Define simple getters for our properties */  
   public function family() {
     return $this->family;
@@ -44,6 +45,7 @@ class IpAddress {
 
   // On construction, parse the given value
   public function __construct($value) {
+    $this->raw = $value;
     $result = $this->parse($value);
 
     if($result === FALSE) {
@@ -57,7 +59,7 @@ class IpAddress {
 
   public function inRange($min, $max) {
     if(
-      !$this->isIpAddress($min) 
+         !$this->isIpAddress($min) 
       || !$this->isIpAddress($max)
     ) {
       throw new \Exception('Invalid value.'); 
@@ -65,7 +67,7 @@ class IpAddress {
 
     // IPs in different families are by default not within range.
     if(
-      || $this->getFamily($min) != $this->family 
+         $this->getFamily($min) != $this->family 
       || $this->getFamily($max) != $this->family
     ) {
      return FALSE;
@@ -241,7 +243,7 @@ class IpAddress {
     $min_long = ip2long($min);
     $max_long = ip2long($max);
 
-    if($this->type == self:IP_RANGE_NONE) {
+    if($this->type == self::IP_RANGE_NONE) {
       $start_long = $end_long = ip2long($this->start);  
     } else {
       $start_long = ip2long($this->start); 

@@ -25,13 +25,14 @@ class IpAddressWidgetBase extends WidgetBase {
 
     $element['#element_validate'] = array(array($this, 'validateIpAddressElement'));
 
-    /*
-    if (($value = $items[$delta]->getValue()) && !empty($value['ip_from'])) {
+    $value = $items[$delta]->getValue();
+    if(!empty($value['ip_from'])) {
       $element['value']['#default_value'] = inet_ntop($value['ip_from']);
-      if ($value['ip_to'] != $value['ip_from']) {
-        $element['value']['#default_value'] .= ' - ' . inet_ntop($value['ip_to']);
-      }
-    }*/
+    }
+
+    if($value['ip_from']!=$value['ip_to']) {
+      $element['value']['#default_value'] .= '-'.inet_ntop($value['ip_to']);
+    }
 
     return $element;
   }
@@ -67,22 +68,29 @@ class IpAddressWidgetBase extends WidgetBase {
       $form_state->setError($element, t('Ranges not allowed, single IP only.'));  
     }
 
-    if($settings['allow_family'] != $ip_address::IP_FAMILY_BOTH && $settings['allow_family']!=$ip_address->family()) {
-      if($settings['allow_family'] == $ip_address::IP_FAMILY_IPV4) {
+    if($settings['allow_family'] != IpAddress::IP_FAMILY_ALL && $settings['allow_family']!=$ip_address->family()) {
+      if($settings['allow_family'] == IpAddress::IP_FAMILY_4) {
         $form_state->setError($element, t('Only IPv4 addresses allowed.'));   
       } else {
         $form_state->setError($element, t('Only IPv6 addresses allowed.'));   
       }
     }
 
-    kint($ip_address);
-    
-    
-    
+    if($settings['ip4_range'] && $ip_address->family() == IpAddress::IP_FAMILY_4) {
+      // No validation for $ip4_range here, it should have already been done on field settings form.
+      $range = new IpAddress($settings['ip4_range']);
+      if(!$ip_address->inRange($range->start(), $range->end())) {
+        $form_state->setError($element, t('IP must be within the range @min-@max', array('@min'=>$range->start(), '@max'=>$range->end())));
+      }
+    }
 
-    
-
-    $form_state->setError($element, t('You shall not pass.'));
+    if($settings['ip6_range'] && $ip_address->family() == IpAddress::IP_FAMILY_6) {
+      // No validation for $ip6_range here, it should have already been done on field settings form.
+      $range = new IpAddress($settings['ip6_range']);
+      if(!$ip_address->inRange($range->start(), $range->end())) {
+        $form_state->setError($element, t('IP must be within the range @min-@max', array('@min'=>$range->start(), '@max'=>$range->end())));
+      }
+    }
   }
 
 
@@ -93,67 +101,14 @@ class IpAddressWidgetBase extends WidgetBase {
     // Convert to storage format
     foreach ($values as &$item) {
       if (!empty($value = trim($item['value']))) {
-          // Get rid of spaces
-          $value = str_replace(' ', '', $value);
-          // If a range, extract the parts
-          $ip_parts = explode('-', $value);
-          $item['ip_from'] = filter_var($ip_parts[0], FILTER_VALIDATE_IP) ? inet_pton($ip_parts[0]) : '';
+          $value = new IpAddress($value);
 
-          if (isset($ip_parts[1])) {
-            $item['ip_to'] = filter_var($ip_parts[1], FILTER_VALIDATE_IP) ? inet_pton($ip_parts[1]) : '';
-          }
-          else {
-            $item['ip_to'] = $item['ip_from'];
-          }
-          // IPv6 addresses as in_addr are 16 bytes, check if this is true
-          $item['ipv6'] = (strlen($item['ip_from']) == 16) ? 1 : 0;
+          $item['ip_from'] = inet_pton($value->start());
+          $item['ip_to']   = inet_pton($value->end());
+          $item['ipv6']    = (int) $value->family() == IpAddress::IP_FAMILY_6;
       }
     }
     return $values;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function defaultSettings() {
-    $settings = parent::defaultSettings();
-
-    $settings['ipv4_span'] = 65536; // 2^16
-    $settings['ipv6_span'] = 16777216; // 2^24
-
-    return $settings;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  function settingsForm(array $form, FormStateInterface $form_state) {
-    $element = parent::settingsForm($form, $form_state);
-
-    $element['ipv4_span'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Maximum span for IPv4 addresses'),
-      '#default_value' => $this->getSetting('ipv4_span'),
-    );
-
-    $element['ipv6_span'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Maximum span for IPv6 addresses'),
-      '#default_value' => $this->getSetting('ipv6_span'),
-    );
-
-    return $element;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function settingsSummary() {
-    $summary = array();
-
-    $summary[] = t('Spans: @ipv4 (IPv4) / @ipv6 (IPv6)', array('@ipv4' => $this->getSetting('ipv4_span'), '@ipv6' => $this->getSetting('ipv6_span')));
-
-    return $summary;
   }
 
 }
