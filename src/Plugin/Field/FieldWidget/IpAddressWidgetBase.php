@@ -63,7 +63,7 @@ class IpAddressWidgetBase extends WidgetBase {
       }
     }
 
-    if(!$settings['allow_range'] && $ip_address->start() != $ip_address->end())) {
+    if(!$settings['allow_range'] && $ip_address->start() != $ip_address->end()) {
       $form_state->setError($element, t('Ranges not allowed, single IP only.'));  
     }
 
