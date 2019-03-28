@@ -61,7 +61,12 @@ class IpAddressDefaultFormatter extends FormatterBase implements ContainerFactor
    * {@inheritdoc}
    */
   public static function defaultSettings() {
-    return array() + parent::defaultSettings();
+    return array(
+      'allow_range'  => TRUE,
+      'allow_family' => array('ipv4','ipv6'),
+      'ip_min'       => '',
+      'ip_max'       => ''
+    ) + parent::defaultSettings();
   }
 
   /**
@@ -95,6 +100,30 @@ class IpAddressDefaultFormatter extends FormatterBase implements ContainerFactor
   public function settingsForm(array $form, FormStateInterface $form_state) {
     $form = parent::settingsForm($form, $form_state);
 
+    $form['allow_range'] = array(
+      '#type'  => 'checkbox',
+      '#title' => $this->t('Allow IP Range'),
+      '#default_value' => $this->getSetting('allow_range')
+    );
+
+    $form['allowed_versions'] = array(
+      '#type'    => 'checkboxes',
+      '#title'   => $this->t('IP version(s) allowed'),
+      '#options' => array(
+        'ipv4' => 'IPv4', 
+        'ipv6' => 'IPv6',
+      ),
+      '#default_value' => $this->getSetting('allow_family')
+    );
+
+    $form['minimum'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Allowed IP range.'),
+      '#description' => $this->t('Range must match IP version otherwise validation will always fail.')
+    );
+
+
+
     return $form;
   }
 
@@ -102,8 +131,12 @@ class IpAddressDefaultFormatter extends FormatterBase implements ContainerFactor
    * {@inheritdoc}
    */
   public function settingsSummary() {
-    $summary = parent::settingsSummary();
-
+    //$summary = parent::settingsSummary();
+    $summary = array();
+    $settings = $this->getSettings();
+    $summary[] = $settings['allow_range']?$this->t('Ranges allowed'):$this->t('Ranges NOT allowed');
+    $summary[] = $this->t('Allowed IP versions: ').implode($settings['allow_family']);
+    $summary[] = $this->t('IP Range: ').$settings['ip_min'].' - '.$settings['ip_max'];
     return $summary;
   }
 
