@@ -9,6 +9,8 @@ use Drupal\Core\TypedData\DataDefinition;
 use Drupal\Core\Field\FieldItemBase;
 use Drupal\Core\Field\FieldItemInterface;
 
+use Drupal\field_ipaddress\IpAddress;
+
 /**
  * Plugin implementation of the 'ipaddress' field type.
  *
@@ -20,7 +22,7 @@ use Drupal\Core\Field\FieldItemInterface;
  *   default_formatter = "ipaddress_default"
  * )
  */
-class IpAddress extends FieldItemBase implements FieldItemInterface {
+class IpAddressField extends FieldItemBase implements FieldItemInterface {
 
   /**
    * {@inheritdoc}
@@ -130,7 +132,8 @@ class IpAddress extends FieldItemBase implements FieldItemInterface {
     return array(
       'allow_range'  => TRUE,
       'allow_family' => 4,
-      'ip_range'     => '',
+      'ip4_range'    => '',
+      'ip6_range'    => '',
     ) + parent::defaultFieldSettings();
   }
 
@@ -146,9 +149,9 @@ class IpAddress extends FieldItemBase implements FieldItemInterface {
       '#type'    => 'radios',
       '#title'   => $this->t('IP version(s) allowed'),
       '#options' => array(
-        4 => $this->t('IPv4'), 
-        6 => $this->t('IPv6'),
-        1 => $this->t('Both IPv4 and IPv6'),
+        IpAddress::IP_FAMILY_4   => $this->t('IPv4'), 
+        IpAddress::IP_FAMILY_6   => $this->t('IPv6'),
+        IpAddress::IP_FAMILY_ALL => $this->t('Both IPv4 and IPv6'),
       ),
       '#description' => $this->t('Select the IP address family (or families) that are allowed.'),
       '#default_value' => $settings['allow_family']
@@ -160,27 +163,43 @@ class IpAddress extends FieldItemBase implements FieldItemInterface {
       '#default_value' => $settings['allow_range']
     );    
 
-    $element['ip_range'] = array(
+    $element['ip4_range'] = array(
       '#type' => 'textfield',
-      '#title' => $this->t('Allowed IP range.'),
-      '#description' => $this->t('Range must match IP version otherwise validation will always fail.<br/>Leave blank to allow any valid IP.'),
+      '#title' => $this->t('Allowed IPv4 range.'),
+      '#description' => $this->t('The range of IPv4 addresses to allow.'),
       '#states' => array(
         'visible' => array(
           array(
-            ':input[name="settings[allow_range]"]' => array('checked' => FALSE),
-            ':input[name="settings[allow_family]"]' => array('value' => 4)
+            ':input[name="settings[allow_range]"]' => array('checked' => TRUE),
+            ':input[name="settings[allow_family]"]' => array('value' => IpAddress::IP_FAMILY_4),
           ),
           array(
-            ':input[name="settings[allow_range]"]' => array('checked' => FALSE),
-            ':input[name="settings[allow_family]"]' => array('value' => 6)            
+            ':input[name="settings[allow_range]"]' => array('checked' => TRUE),            
+            ':input[name="settings[allow_family]"]' => array('value' => IpAddress::IP_FAMILY_ALL),            
           )
         )
       ),
-      '#default_value' => $settings['ip_range'],
-      //'#element_validate' => array(array($this, 'validateRange'))
+      '#default_value' => $settings['ip4_range'],
     );
 
-
+    $element['ip6_range'] = array(
+      '#type' => 'textfield',
+      '#title' => $this->t('Allowed IPv6 range.'),
+      '#description' => $this->t('The range of IPv6 addresses to allow.'),
+      '#states' => array(
+        'visible' => array(
+          array(
+            ':input[name="settings[allow_range]"]' => array('checked' => TRUE),
+            ':input[name="settings[allow_family]"]' => array('value' => IpAddress::IP_FAMILY_6)            
+          ),
+          array(
+            ':input[name="settings[allow_range]"]' => array('checked' => TRUE),            
+            ':input[name="settings[allow_family]"]' => array('value' => IpAddress::IP_FAMILY_ALL),            
+          )
+        )
+      ),
+      '#default_value' => $settings['ip6_range'],
+    );
 
     return $element;
 
