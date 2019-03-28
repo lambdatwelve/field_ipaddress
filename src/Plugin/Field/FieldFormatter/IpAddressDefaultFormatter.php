@@ -71,12 +71,15 @@ class IpAddressDefaultFormatter extends FormatterBase implements ContainerFactor
     $elements = array();
 
     foreach ($items as $delta => $item) {
-      if (($value = $item->getValue()) && !empty($value['ip_from'])) {
-        $text = inet_ntop($value['ip_from']);
-        if ($value['ip_to'] != $value['ip_from']) {
-          $text .= '-' . inet_ntop($value['ip_to']);
+        $value = $item->getValue();
+        if(!empty($value['ip_from'])) {
+          $element['value']['#default_value'] = inet_ntop($value['ip_from']);
         }
 
+        if($value['ip_from']!=$value['ip_to']) {
+          $element['value']['#default_value'] .= '-'.inet_ntop($value['ip_to']);
+        }
+       
         $elements[$delta] = array(
           '#plain_text' => $text,
         );
