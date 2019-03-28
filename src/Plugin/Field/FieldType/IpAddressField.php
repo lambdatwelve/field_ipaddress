@@ -35,10 +35,6 @@ class IpAddressField extends FieldItemBase implements FieldItemInterface {
    * {@inheritdoc}
    */
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
-    $properties['ipv6'] = DataDefinition::create('boolean')
-      ->setLabel(t('Type of IP number i IPv6'))
-      ->setRequired(FALSE);
-
     $properties['ip_from'] = DataDefinition::create('any')
       ->setLabel(t('IP value minimum'))
       ->setDescription(t('The IP minimum value, as a binary number.'));
@@ -56,13 +52,6 @@ class IpAddressField extends FieldItemBase implements FieldItemInterface {
   public static function schema(FieldStorageDefinitionInterface $field_definition) {
     return [
       'columns' => [
-        'ipv6' => [
-          'description' => 'If this is a IPv6 type address',
-          'type' => 'int',
-          'size' => 'tiny',
-          'default' => 0,
-          'not null' => TRUE,
-        ],
         // For IPv4 we store IP numbers as 4 byte binary (32 bit)
         // for IPv6 we store 16 byte binary (128 bit)
         // this follows the in_addr as used by the PHP function
@@ -85,7 +74,6 @@ class IpAddressField extends FieldItemBase implements FieldItemInterface {
         ],
       ],
       'indexes' => [
-        'ipv6' => ['ipv6'],
         'ip_from' => ['ip_from'],
         'ip_to' => ['ip_to'],
       ],
@@ -97,9 +85,9 @@ class IpAddressField extends FieldItemBase implements FieldItemInterface {
    */
   public static function generateSampleValue(FieldDefinitionInterface $field_definition) {
     // First random i IPv4 or IPv6.
-    $values['ipv6'] = (rand(0, 1) == 1);
+    $family = (rand(0, 1) == 1);
     // IPv6 contains 16 bytes, IPv4 contains 4 bytes.
-    $bytes = $values['ipv6'] == 1 ? 16 : 4;
+    $bytes = $family == 1 ? 16 : 4;
     // Use a built in PHP function to generate random bytes.
     $values['ip_from'] = openssl_random_pseudo_bytes($bytes);
     // Extract first part excluding last byte.
