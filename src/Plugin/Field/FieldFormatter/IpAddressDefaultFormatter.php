@@ -43,12 +43,13 @@ class IpAddressDefaultFormatter extends FormatterBase implements ContainerFactor
 
     foreach ($items as $delta => $item) {
       $value = $item->getValue();
-      if (!empty($value['ip_from'])) {
-        $text = inet_ntop($value['ip_from']);
-      }
 
-      if ($value['ip_from'] != $value['ip_to']) {
-        $text .= '-' . inet_ntop($value['ip_to']);
+      if (!empty($value['ip_start'])) {
+        $text = inet_ntop($value['ip_start']);
+
+        if ($value['ip_start'] != $value['ip_end']) {
+          $text .= '-' . inet_ntop($value['ip_end']);
+        }
       }
 
       $elements[$delta] = [

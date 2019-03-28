@@ -27,12 +27,13 @@ class IpAddressWidgetBase extends WidgetBase {
     $element['#element_validate'] = [[$this, 'validateIpAddressElement']];
 
     $value = $items[$delta]->getValue();
-    if (!empty($value['ip_from'])) {
-      $element['value']['#default_value'] = inet_ntop($value['ip_from']);
-    }
 
-    if ($value['ip_from'] != $value['ip_to']) {
-      $element['value']['#default_value'] .= '-' . inet_ntop($value['ip_to']);
+    if (!empty($value['ip_start'])) {
+      $element['value']['#default_value'] = inet_ntop($value['ip_start']);
+
+      if ($value['ip_start'] != $value['ip_end']) {
+        $element['value']['#default_value'] .= '-' . inet_ntop($value['ip_end']);
+      }
     }
 
     return $element;
@@ -99,6 +100,7 @@ class IpAddressWidgetBase extends WidgetBase {
       // No validation for $ip6_range here, it should have already been done
       // on field settings form.
       $range = new IpAddress($settings['ip6_range']);
+
       if (!$ip_address->inRange($range->start(), $range->end())) {
         $form_state->setError($element,
           t('IP must be within the range @min-@max', ['@min' => $range->start(), '@max' => $range->end()]));
@@ -115,9 +117,8 @@ class IpAddressWidgetBase extends WidgetBase {
       if (!empty($value = trim($item['value']))) {
         $value = new IpAddress($value);
 
-        $item['ip_from'] = inet_pton($value->start());
-        $item['ip_to']   = inet_pton($value->end());
-        $item['ipv6']    = (int) $value->family() == IpAddress::IP_FAMILY_6;
+        $item['ip_start'] = inet_pton($value->start());
+        $item['ip_end']   = inet_pton($value->end());
       }
     }
     return $values;
